@@ -1,0 +1,28 @@
+name: snyk-adoption-report
+
+on:
+  schedule:
+    - cron: "0 9 * * MON"   # every Monday 9AM UTC
+  workflow_dispatch:        # allow manual trigger too
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Run MCP GitHub server query
+        run: |
+          npx @github/mcp-client \
+            --server github \
+            --query "List repos in org my-org missing snyk in workflows" \
+            --output snyk-report.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.COPILOT_MCP_GITHUB_PERSONAL_ACCESS_TOKEN }}
+
+      - name: Upload report artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: snyk-adoption-report
+          path: snyk-report.json
